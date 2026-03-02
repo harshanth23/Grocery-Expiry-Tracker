@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "item_type": "Grocery",
+    "item_name": "RAVADOSAFLOUR",
+    "mfg": "25/09/2025",
+    "exp": "25/12/2025",
+    "quantity": 1,
+    "saved_at": "2026-02-05 22:18:32"
+  },
+  {
+    "id": 2,
+    "item_type": "Grocery",
+    "item_name": "RAVADOSAFLOUR",
+    "mfg": "25/09/2025",
+    "exp": "25/12/2025",
+    "quantity": 1,
+    "saved_at": "2026-02-05 22:29:51"
+  },
+  {
+    "id": 3,
+    "item_type": "Medicine",
+    "item_name": "P500",
+    "mfg": "Not detected",
+    "exp": "Not detected",
+    "quantity": 1,
+    "saved_at": "2026-02-05 23:52:43"
+  },
+  {
+    "id": 4,
+    "item_type": "Medicine",
+    "item_name": "P500",
+    "mfg": "Not detected",
+    "exp": "01/03/2026",
+    "quantity": 1,
+    "saved_at": "2026-02-05 23:59:43"
+  },
+  {
+    "id": 5,
+    "item_type": "Medicine",
+    "item_name": "Paracetamol Tablets IP 500 mg",
+    "mfg": "01/04/2024",
+    "exp": "01/03/2026",
+    "quantity": 1,
+    "saved_at": "2026-02-06 00:12:15"
+  }
+]

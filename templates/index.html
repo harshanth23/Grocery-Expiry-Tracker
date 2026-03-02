@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grocery Expiry Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: 40px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+            color: #333;
+        }
+
+        select, input[type="file"], input[type="text"], input[type="date"], button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        input[type="text"], input[type="date"] {
+            font-size: 14px;
+        }
+
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            margin-top: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 12px;
+        }
+
+        button:hover {
+            background: #229954;
+        }
+
+        button.secondary {
+            background: #3498db;
+            margin-top: 8px;
+        }
+
+        button.secondary:hover {
+            background: #2980b9;
+        }
+
+        button.cancel {
+            background: #e74c3c;
+            margin-top: 8px;
+        }
+
+        button.cancel:hover {
+            background: #c0392b;
+        }
+
+        video, canvas {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        .note {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .edit-form {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-group button {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .step-indicator {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .detail-value {
+            color: #333;
+        }
+
+        #loadingSpinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #27ae60;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="success-message" id="successMessage"></div>
+
+    <!-- STEP 1: Select Category -->
+    <div class="step active" id="step1">
+        <div class="step-indicator">Step 1 of 3: Select Item Category</div>
+        <h2>📸 Scan Household Item</h2>
+
+        <label>Item Type</label>
+        <select id="itemType" required>
+            <option value="">-- Select Item Type --</option>
+            <option value="Grocery">Grocery</option>
+            <option value="Fruit">Fruit</option>
+            <option value="Vegetable">Vegetable</option>
+            <option value="Medicine">Medicine</option>
+        </select>
+
+        <button onclick="goToStep2()">Next: Upload Images</button>
+    </div>
+
+    <!-- STEP 2: Upload Images -->
+    <div class="step" id="step2">
+        <div class="step-indicator">Step 2 of 3: Capture Images</div>
+        <h2>📷 Capture Images</h2>
+
+        <p><b>Selected Category:</b> <span id="selectedCategory">-</span></p>
+
+        <!-- PRODUCT IMAGE -->
+        <label>Product Image</label>
+        <input type="file" id="productImage" accept="image/*">
+        <button type="button" class="secondary" onclick="startCamera('product')">📸 Use Camera</button>
+
+        <!-- LABEL IMAGE -->
+        <label>Label Image (MFG / EXP)</label>
+        <input type="file" id="labelImage" accept="image/*">
+        <button type="button" class="secondary" onclick="startCamera('label')">📸 Use Camera</button>
+
+        <!-- CAMERA VIEW -->
+        <video id="video" autoplay playsinline style="display:none;"></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+
+        <button type="button" onclick="capturePhoto()" id="captureBtn" style="display:none;">📸 Capture Photo</button>
+
+        <div class="button-group">
+            <button class="cancel" onclick="goToStep1()">Back</button>
+            <button onclick="goToStep3()">Next: Review Details</button>
+        </div>
+
+        <p class="note">
+            Images are processed temporarily and deleted immediately after scanning.
+        </p>
+    </div>
+
+    <!-- STEP 3: Review & Edit Details -->
+    <div class="step" id="step3">
+        <div class="step-indicator">Step 3 of 3: Review & Edit Details</div>
+        <h2>✏️ Verify Details</h2>
+
+        <div id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>Processing images...</p>
+        </div>
+
+        <div id="detailsSection" style="display:none;">
+            <div class="edit-form">
+                <div class="form-group">
+                    <label>Item Type</label>
+                    <input type="text" id="editItemType" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="editItemName" placeholder="e.g., Mango Juice">
+                </div>
+
+                <div class="form-group">
+                    <label>Manufacturing / Packed Date <span style="color: #e74c3c;">*</span></label>
+                    <input type="text" id="editMfg" placeholder="e.g., 01/01/2025" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Expiry Date <span style="color: #e74c3c;">*</span></label>
+                    <input type="text" id="editExp" placeholder="e.g., 31/12/2025" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <select id="editQuantity">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+
+                <div style="font-size: 12px; color: #e74c3c; margin-top: 10px;" id="extractionNote"></div>
+            </div>
+
+            <div class="button-group">
+                <button class="cancel" onclick="goToStep2()">Back</button>
+                <button onclick="saveItem()"> Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let currentTarget = null;
+let stream = null;
+let extractedData = {};
+
+function goToStep1() {
+    showStep(1);
+}
+
+function goToStep2() {
+    const itemType = document.getElementById('itemType').value;
+    if (!itemType) {
+        alert("Please select an item type");
+        return;
+    }
+    document.getElementById('selectedCategory').innerHTML = itemType;
+    showStep(2);
+}
+
+function goToStep3() {
+    const productFile = document.getElementById('productImage').files[0];
+    const labelFile = document.getElementById('labelImage').files[0];
+
+    if (!productFile || !labelFile) {
+        alert("Please upload both product and label images");
+        return;
+    }
+
+    showStep(3);
+    extractDetails();
+}
+
+function showStep(stepNumber) {
+    document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+    document.getElementById('step' + stepNumber).classList.add('active');
+}
+
+function startCamera(target) {
+    currentTarget = target;
+    const video = document.getElementById('video');
+    const captureBtn = document.getElementById('captureBtn');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(s => {
+            stream = s;
+            video.srcObject = stream;
+            video.style.display = 'block';
+            captureBtn.style.display = 'block';
+        })
+        .catch(err => {
+            alert("Camera access denied or unavailable.");
+        });
+}
+
+function capturePhoto() {
+    if (!currentTarget) {
+        alert("Select Product or Label first.");
+        return;
+    }
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(blob => {
+        const file = new File([blob], currentTarget + ".jpg", { type: "image/jpeg" });
+
+        const inputSelector = currentTarget === 'product' ? '#productImage' : '#labelImage';
+        const input = document.querySelector(inputSelector);
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files;
+
+        // Stop camera after capture
+        stream.getTracks().forEach(track => track.stop());
+        document.getElementById('video').style.display = 'none';
+        document.getElementById('captureBtn').style.display = 'none';
+
+        alert("Photo captured!");
+    });
+}
+
+function extractDetails() {
+    const itemType = document.getElementById('itemType').value;
+    const productFile = document.getElementById('productImage').files[0];
+    const labelFile = document.getElementById('labelImage').files[0];
+
+    const formData = new FormData();
+    formData.append('item_type', itemType);
+    formData.append('product_image', productFile);
+    formData.append('label_image', labelFile);
+
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('detailsSection').style.display = 'none';
+
+    fetch('/scan-item', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Error: " + data.error);
+            return;
+        }
+
+        extractedData = data;
+
+        console.log("Extracted Data from backend:", data);
+
+        document.getElementById('editItemType').value = data.item_type;
+        document.getElementById('editItemName').value = data.item_name || '';
+        document.getElementById('editMfg').value = data.mfg || '';
+        document.getElementById('editExp').value = data.exp || '';
+        document.getElementById('editQuantity').value = '1';
+
+        // Show note if dates were not detected
+        let notes = [];
+        
+        console.log("MFG value:", data.mfg);
+        console.log("EXP value:", data.exp);
+        
+        if (!data.mfg || data.mfg === "Not detected" || data.mfg.trim() === "") {
+            notes.push("⚠️ Manufacturing date not detected automatically. Please fill it manually.");
+        }
+        if (!data.exp || data.exp === "Not detected" || data.exp.trim() === "") {
+            notes.push("⚠️ Expiry date not detected automatically. Please fill it manually.");
+        }
+
+        const noteElement = document.getElementById('extractionNote');
+        noteElement.innerHTML = notes.length > 0 ? notes.join("<br>") : "";
+        
+        console.log("Warning notes:", notes);
+
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('detailsSection').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Error processing images: " + error);
+        document.getElementById('loadingSpinner').style.display = 'none';
+    });
+}
+
+function saveItem() {
+    const itemData = {
+        item_type: document.getElementById('editItemType').value,
+        item_name: document.getElementById('editItemName').value,
+        mfg: document.getElementById('editMfg').value,
+        exp: document.getElementById('editExp').value,
+        quantity: parseInt(document.getElementById('editQuantity').value)
+    };
+
+    // Validate required fields
+    if (!itemData.mfg.trim()) {
+        alert("Please enter Manufacturing/Packed date");
+        return;
+    }
+    if (!itemData.exp.trim()) {
+        alert("Please enter Expiry date");
+        return;
+    }
+
+    fetch('/save-item', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(itemData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage("✅ Item saved successfully!");
+            setTimeout(() => {
+                resetForm();
+                goToStep1();
+            }, 2000);
+        } else {
+            alert("Error saving item");
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Error saving item: " + error);
+    });
+}
+
+function resetForm() {
+    document.getElementById('itemType').value = '';
+    document.getElementById('productImage').value = '';
+    document.getElementById('labelImage').value = '';
+    document.getElementById('selectedCategory').innerHTML = '-';
+    document.getElementById('successMessage').style.display = 'none';
+}
+
+function showSuccessMessage(message) {
+    const successMsg = document.getElementById('successMessage');
+    successMsg.innerHTML = message;
+    successMsg.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
