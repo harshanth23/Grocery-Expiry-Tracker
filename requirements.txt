@@ -1,8 +1,8 @@
+dateutil
 flask
-python-dateutil
+item_name_extractor
 numpy
-tensorflow
+ocr_engine
 paddleocr
-re
-flask==3.0.2
-json
+regex_utils
+tensorflow
